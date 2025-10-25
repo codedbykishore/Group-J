@@ -1,0 +1,153 @@
+# Complete v0 Prompt for Chat Implementation
+
+```
+# M&A Due Diligence Chat Interface - Implementation Guide
+
+Build a chat interface that queries the Contextual AI M&A Due Diligence Agent.
+
+## Environment Variables
+```env
+CONTEXTUAL_API_KEY=key-uRyfZgT-9AkHMBigRnrc7cUO0QN3m3w_HZ2gPUTDx5TP7O-5w
+AGENT_ID=your_agent_id_here
+```
+
+## API Configuration
+
+**Base URL:** https://api.contextual.ai/v1
+**Endpoint:** POST /agents/query
+**Full URL:** https://api.contextual.ai/v1/agents/query
+
+## Request Format
+
+```typescript
+const API_URL = 'https://api.contextual.ai/v1/agents/query';
+
+const response = await fetch(API_URL, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${process.env.CONTEXTUAL_API_KEY}`
+  },
+  body: JSON.stringify({
+    agent_id: process.env.AGENT_ID,
+    messages: [
+      {
+        role: "user",
+        content: "What was Seagen's total revenue in 2022?"
+      }
+    ]
+  })
+});
+
+const data = await response.json();
+const assistantResponse = data.message.content;
+```
+
+## Response Structure
+
+```json
+{
+  "message": {
+    "content": "Seagen's total revenue for 2022, as reported in their 10-K, was $1.96 billion...",
+    "role": "assistant"
+  },
+  "message_id": "msg_abc123xyz",
+  "retrieval_contents": [
+    {
+      "content_id": "content_123",
+      "score": 0.95
+    }
+  ]
+}
+```
+
+## Implementation Requirements
+
+### 1. Chat Interface Components
+- Text input box for user queries
+- Send button to submit queries
+- Chat history display (user + assistant messages)
+- Loading indicator during API calls
+- Error message display
+
+### 2. Message Flow
+```typescript
+// User submits query
+const userMessage = "Your query here";
+
+// Add to chat history
+setChatHistory([...chatHistory, { role: 'user', content: userMessage }]);
+
+// Show loading state
+setIsLoading(true);
+
+// Make API call
+try {
+  const response = await fetch('https://api.contextual.ai/v1/agents/query', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.CONTEXTUAL_API_KEY}`
+    },
+    body: JSON.stringify({
+      agent_id: process.env.AGENT_ID,
+      messages: [{ role: "user", content: userMessage }]
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const assistantMessage = data.message.content;
+
+  // Add assistant response to chat history
+  setChatHistory([
+    ...chatHistory, 
+    { role: 'user', content: userMessage },
+    { role: 'assistant', content: assistantMessage }
+  ]);
+
+} catch (error) {
+  console.error('Chat error:', error);
+  // Show error to user
+  setError('Failed to get response. Please try again.');
+} finally {
+  setIsLoading(false);
+}
+```
+
+### 3. Sample Queries (For Testing)
+- "What was Seagen's total revenue in 2022?"
+- "Should Pfizer proceed with acquiring Seagen at a $43B valuation?"
+- "Summarize the key regulatory and antitrust risks present in the Pfizer–Seagen transaction."
+- "Analyze Seagen's debt structure, covenant compliance, and any refinancing risks."
+
+## What NOT to Implement
+
+❌ Do NOT create datastores
+❌ Do NOT upload documents
+❌ Do NOT implement parser functionality
+❌ Do NOT implement reranker functionality
+❌ Do NOT implement evaluation/testing features
+❌ Do NOT manage conversation history on backend
+❌ Do NOT add data ingestion
+
+## Focus Only On
+
+✅ Simple chat UI (input + display)
+✅ Sending user messages to API
+✅ Displaying assistant responses
+✅ Loading states
+✅ Error handling
+✅ Client-side chat history
+
+## Key Points
+
+1. Each API call sends ONLY the current user message (not full history)
+2. Extract response from `data.message.content`
+3. Use environment variables for API_KEY and AGENT_ID
+4. Handle loading and error states gracefully
+5. Display messages in a clean, readable format
+
