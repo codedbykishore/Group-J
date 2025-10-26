@@ -6,9 +6,9 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "SHIFT - Document Management",
-  description: "Manage and organize your documents efficiently",
-    generator: 'v0.app'
+  title: "M&A Agent - Due Diligence Assistant",
+  description: "M&A Due Diligence powered by Contextual AI",
+  generator: "v0.app",
 }
 
 export default function RootLayout({

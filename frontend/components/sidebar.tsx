@@ -11,8 +11,9 @@ export default function Sidebar({ activeSection, onNavigate }: SidebarProps) {
   return (
     <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
       {/* Header */}
+            {/* Logo */}
       <div className="p-6 border-b border-sidebar-border">
-        <h1 className="text-2xl font-bold text-sidebar-primary tracking-wider">SHIFT</h1>
+        <h1 className="text-2xl font-bold text-sidebar-primary tracking-wider">M&A Agent</h1>
       </div>
 
       {/* Navigation */}
@@ -67,7 +68,7 @@ export default function Sidebar({ activeSection, onNavigate }: SidebarProps) {
 
       {/* Footer */}
       <div className="p-6 border-t border-sidebar-border text-xs text-sidebar-foreground text-center">
-        <p>© 2025 SHIFT</p>
+        <p>© 2025 M&A Agent</p>
       </div>
     </aside>
   )
