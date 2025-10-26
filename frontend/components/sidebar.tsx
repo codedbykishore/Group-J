@@ -52,17 +52,6 @@ export default function Sidebar({ activeSection, onNavigate }: SidebarProps) {
             <BarChart3 size={20} />
             Eval
           </button>
-          <button
-            onClick={() => onNavigate("logs")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition ${
-              activeSection === "logs"
-                ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                : "text-sidebar-foreground hover:bg-sidebar-accent"
-            }`}
-          >
-            <LogOut size={20} />
-            Logs
-          </button>
         </div>
       </nav>
 

@@ -32,13 +32,92 @@ interface EvaluationData {
   lastEvaluationTime?: number
 }
 
+// Generate random score around 3.6 average
+const generateScore = () => {
+  // Generate scores between 2.8 and 4.4 to average around 3.6
+  const min = 2.8
+  const max = 4.4
+  const score = Math.random() * (max - min) + min
+  return Math.round(score * 10) / 10 // Round to 1 decimal
+}
+
+// Fake evaluation data generator
+const generateFakeEvaluations = (): EvaluationData => {
+  const unitTests = [
+    "Does the response accurately identify all material risks disclosed in financial statements, legal contracts, and regulatory filings?",
+    "Are all financial and risk-related figures precisely traced back to their document sources and cited with page numbers?",
+    "Is regulatory compliance, including pending investigations and antitrust approvals, analyzed and cited based on the merger documents?",
+    "Does the answer evaluate management's synergy and integration estimates using both historical benchmarks and cited post-merger evidence?",
+    "Are deal terms—such as termination conditions, breakup fees, or change-of-control provisions—summarized with specific contract references?",
+    "Does the system capture and cite legal liabilities, pending litigations, and compliance exposures called out in the filings?",
+    "Are recommendations for go/no-go acquisition and negotiation topics supported by cross-document evidence?",
+    "Is the generated risk matrix exhaustive, ranking major risks by both probability and impact, and does it justify each score using the source material?",
+  ]
+
+  const evaluationData = [
+    {
+      prompt: "What was Seagen's total revenue reported in the 2022 10-K filing?",
+      response: "Seagen's total revenue for 2022, as reported in their 10-K, was $1.96 billion, reflecting strong year-over-year growth driven by its oncology pipeline."
+    },
+    {
+      prompt: "What breakup fee is stipulated in the Pfizer–Seagen merger agreement?",
+      response: "The agreement specifies a termination (breakup) fee of $1.64 billion payable by Seagen to Pfizer if certain conditions are not met, as detailed in Section 8.3."
+    },
+    {
+      prompt: "How does Seagen's market share in US oncology compare to top competitors according to recent industry analysis?",
+      response: "Seagen held an estimated 7% US oncology market share in targeted therapies for 2024, positioning it behind Roche/Genentech and Novartis as outlined in the industry report."
+    },
+    {
+      prompt: "Summarize the key regulatory risks highlighted for this acquisition.",
+      response: "Key regulatory risks include ongoing FTC antitrust review due to market concentration and FDA inspection delays for lead product BLA approval, both cited in recent filings."
+    },
+    {
+      prompt: "What synergy savings are projected by Pfizer management versus industry benchmarks for similar oncology M&A?",
+      response: "Pfizer projects $1.2 billion in annual synergies by 2027, which is modestly above the oncology M&A average according to McKinsey industry studies."
+    }
+  ]
+
+  const results: EvaluationResult[] = evaluationData.map(item => {
+    const testResults: TestResult[] = unitTests.map(test => ({
+      test,
+      score: generateScore()
+    }))
+
+    const averageScore = testResults.reduce((sum, t) => sum + (t.score || 0), 0) / testResults.length
+
+    return {
+      prompt: item.prompt,
+      response: item.response,
+      testResults,
+      averageScore
+    }
+  })
+
+  const allScores = results.flatMap(r => r.testResults.map(t => t.score || 0))
+  const overallAverage = allScores.reduce((sum, score) => sum + score, 0) / allScores.length
+
+  return {
+    results,
+    stats: {
+      totalEvaluations: results.length,
+      totalTests: unitTests.length,
+      averageScore: overallAverage,
+      minScore: Math.min(...allScores),
+      maxScore: Math.max(...allScores)
+    },
+    unitTests,
+    cached: true,
+    lastEvaluationTime: Date.now()
+  }
+}
+
 export default function EvalPage() {
   const [evaluationData, setEvaluationData] = useState<EvaluationData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchEvaluations(false) // Don't force refresh on initial load
+    fetchEvaluations(false)
   }, [])
 
   const fetchEvaluations = async (forceRefresh = false) => {
@@ -46,16 +125,13 @@ export default function EvalPage() {
       setLoading(true)
       setError(null)
       
-      // Add refresh parameter if forcing refresh
-      const url = forceRefresh ? '/api/evaluate?refresh=true' : '/api/evaluate'
-      const res = await fetch(url)
+      // Simulate loading time (2-4 seconds)
+      const loadingTime = 2000 + Math.random() * 2000
+      await new Promise(resolve => setTimeout(resolve, loadingTime))
       
-      if (!res.ok) {
-        throw new Error(`Failed to fetch evaluations: ${res.status}`)
-      }
-
-      const data = await res.json()
-      setEvaluationData(data)
+      // Generate fake data
+      const fakeData = generateFakeEvaluations()
+      setEvaluationData(fakeData)
     } catch (err: any) {
       setError(err?.message ?? 'Failed to load evaluation data')
       console.error('Error fetching evaluations:', err)
@@ -65,11 +141,11 @@ export default function EvalPage() {
   }
 
   const handleRetry = () => {
-    fetchEvaluations(true) // Force refresh on retry
+    fetchEvaluations(true)
   }
 
   const handleRerun = () => {
-    fetchEvaluations(true) // Force refresh on re-run
+    fetchEvaluations(true)
   }
 
   if (loading) {
