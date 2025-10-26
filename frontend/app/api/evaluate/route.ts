@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server'
 
+// Cache for evaluation results
+let cachedResults: any = null
+let lastEvaluationTime: number | null = null
+
 // Sample evaluation data from the notebook
 const evaluationData = [
   {
@@ -41,8 +45,21 @@ const unitTests = [
   'Is the generated risk matrix exhaustive, ranking major risks by both probability and impact, and does it justify each score using the source material?',
 ]
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // Check if we should use cached results
+    const { searchParams } = new URL(request.url)
+    const forceRefresh = searchParams.get('refresh') === 'true'
+
+    // Return cached results if available and not forcing refresh
+    if (cachedResults && !forceRefresh) {
+      return NextResponse.json({
+        ...cachedResults,
+        cached: true,
+        lastEvaluationTime,
+      })
+    }
+
     const apiKey = process.env.CONTEXTUAL_API_KEY
 
     if (!apiKey) {
@@ -121,10 +138,18 @@ export async function GET() {
       maxScore: allScores.length > 0 ? Math.max(...allScores) : 0,
     }
 
-    return NextResponse.json({
+    // Cache the results
+    cachedResults = {
       results,
       stats: overallStats,
       unitTests,
+    }
+    lastEvaluationTime = Date.now()
+
+    return NextResponse.json({
+      ...cachedResults,
+      cached: false,
+      lastEvaluationTime,
     })
   } catch (err: any) {
     console.error('Evaluation error:', err)

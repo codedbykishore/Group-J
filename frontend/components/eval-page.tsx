@@ -28,6 +28,8 @@ interface EvaluationData {
   results: EvaluationResult[]
   stats: EvaluationStats
   unitTests: string[]
+  cached?: boolean
+  lastEvaluationTime?: number
 }
 
 export default function EvalPage() {
@@ -36,14 +38,17 @@ export default function EvalPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchEvaluations()
+    fetchEvaluations(false) // Don't force refresh on initial load
   }, [])
 
-  const fetchEvaluations = async () => {
+  const fetchEvaluations = async (forceRefresh = false) => {
     try {
       setLoading(true)
       setError(null)
-      const res = await fetch('/api/evaluate')
+      
+      // Add refresh parameter if forcing refresh
+      const url = forceRefresh ? '/api/evaluate?refresh=true' : '/api/evaluate'
+      const res = await fetch(url)
       
       if (!res.ok) {
         throw new Error(`Failed to fetch evaluations: ${res.status}`)
@@ -57,6 +62,14 @@ export default function EvalPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleRetry = () => {
+    fetchEvaluations(true) // Force refresh on retry
+  }
+
+  const handleRerun = () => {
+    fetchEvaluations(true) // Force refresh on re-run
   }
 
   if (loading) {
@@ -79,7 +92,7 @@ export default function EvalPage() {
           <div className="text-center">
             <p className="text-red-500 mb-4">{error}</p>
             <button
-              onClick={fetchEvaluations}
+              onClick={handleRetry}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
             >
               Retry
@@ -94,8 +107,23 @@ export default function EvalPage() {
     <div className="flex flex-col h-full bg-background">
       {/* Header */}
       <div className="border-b border-border p-6">
-        <h2 className="text-2xl font-bold text-foreground">Evaluation</h2>
-        <p className="text-sm text-muted-foreground mt-1">M&A Due Diligence Quality Assessment using LMUnit</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">Evaluation</h2>
+            <p className="text-sm text-muted-foreground mt-1">M&A Due Diligence Quality Assessment using LMUnit</p>
+          </div>
+          {evaluationData?.cached && evaluationData?.lastEvaluationTime && (
+            <div className="text-right">
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs font-medium">
+                <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                Cached Results
+              </span>
+              <p className="text-xs text-muted-foreground mt-1">
+                Last run: {new Date(evaluationData.lastEvaluationTime).toLocaleString()}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Content */}
@@ -224,11 +252,15 @@ export default function EvalPage() {
             {/* Refresh Button */}
             <div className="mt-8 text-center">
               <button
-                onClick={fetchEvaluations}
-                className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition"
+                onClick={handleRerun}
+                disabled={loading}
+                className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Re-run Evaluations
+                {loading ? 'Running...' : 'Re-run Evaluations'}
               </button>
+              <p className="text-xs text-muted-foreground mt-2">
+                This will run all LMUnit tests again (~30-60 seconds)
+              </p>
             </div>
           </>
         )}
